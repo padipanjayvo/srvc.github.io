@@ -1,87 +1,86 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body { background: #f4f7f6; padding-top: 50px; font-family: 'Sarabun', sans-serif; }
-    .card { border-radius: 15px; border: none; shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .btn-primary { background: #4285f4; border: none; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Link Shortener</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <div class="container mt-5">
-    <div class="row justify-content-center">
-      <div class="col-md-8">
-        <div class="card p-4 shadow-sm">
-          <h2 class="text-center mb-4">🚀 ย่อลิงก์ด้วย Google Script</h2>
-          
-          <div class="mb-3">
-            <input type="url" id="longUrl" class="form-control" placeholder="วางลิงก์ยาวๆ ที่นี่...">
-          </div>
-          <div class="mb-3">
-            <input type="text" id="customId" class="form-control" placeholder="ชื่อที่ต้องการ (เว้นว่างไว้เพื่อสุ่ม)">
-          </div>
-          <button onclick="makeShort()" class="btn btn-primary w-100 py-2" id="btn">สร้างลิงก์ย่อ</button>
+<body class="bg-gray-900 text-white p-5">
+    <div class="max-w-2xl mx-auto mt-10">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700">
+            <h1 class="text-3xl font-bold mb-6 text-blue-400">GitHub x Google Sheets</h1>
+            
+            <div class="space-y-4">
+                <input type="url" id="longUrl" placeholder="วางลิงก์ยาวที่นี่" 
+                    class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500">
+                
+                <input type="text" id="customId" placeholder="ชื่อลิงก์ (ถ้ามี)" 
+                    class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500">
+                
+                <button onclick="shorten()" id="btn" class="w-full bg-blue-600 p-3 rounded font-bold hover:bg-blue-700">
+                    สร้างลิงก์และบันทึก
+                </button>
+            </div>
 
-          <div id="result" class="mt-4 text-center" style="display:none;">
-            <p>ลิงก์ของคุณคือ:</p>
-            <h4 id="shortenedLink" class="text-primary"></h4>
-          </div>
+            <div id="result" class="mt-6 p-4 bg-gray-900 rounded hidden">
+                <p class="text-sm text-gray-400">ลิงก์ของคุณ:</p>
+                <p id="shortLink" class="text-blue-300 font-mono"></p>
+            </div>
         </div>
 
-        <div class="mt-5">
-          <h4>📊 สถิติการใช้งาน</h4>
-          <table class="table table-hover bg-white rounded shadow-sm">
-            <thead>
-              <tr>
-                <th>รหัส</th>
-                <th>ปลายทาง</th>
-                <th>คลิก</th>
-              </tr>
-            </thead>
-            <tbody id="statTable"></tbody>
-          </table>
+        <div class="mt-10 bg-gray-800 rounded-2xl overflow-hidden shadow-xl">
+            <div class="p-4 bg-gray-700 font-bold">สถิติจาก Google Sheets</div>
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-gray-400 border-b border-gray-700">
+                        <th class="p-4">ID</th>
+                        <th class="p-4">คลิก</th>
+                    </tr>
+                </thead>
+                <tbody id="statTable"></tbody>
+            </table>
         </div>
-      </div>
     </div>
-  </div>
 
-  <script>
-    function makeShort() {
-      const url = document.getElementById('longUrl').value;
-      const id = document.getElementById('customId').value;
-      const btn = document.getElementById('btn');
-      
-      if(!url) return alert('กรุณาใส่ URL');
-      
-      btn.disabled = true;
-      btn.innerHTML = 'กำลังสร้าง...';
+    <script>
+        // *** สำคัญ: วาง Web App URL ของ Google Script ที่นี่ ***
+        const SCRIPT_URL = "YOUR_GOOGLE_SCRIPT_WEB_APP_URL";
 
-      google.script.run.withSuccessHandler(function(res) {
-        document.getElementById('result').style.display = 'block';
-        document.getElementById('shortenedLink').innerText = res;
-        btn.disabled = false;
-        btn.innerHTML = 'สร้างลิงก์ย่อ';
-        loadStats(); // อัปเดตตาราง
-      }).shortenUrl(url, id);
-    }
+        async function shorten() {
+            const url = document.getElementById('longUrl').value;
+            const id = document.getElementById('customId').value;
+            const btn = document.getElementById('btn');
 
-    function loadStats() {
-      google.script.run.withSuccessHandler(function(data) {
-        let html = '';
-        data.forEach(row => {
-          html += `<tr>
-            <td><strong>${row[0]}</strong></td>
-            <td class="text-truncate" style="max-width: 200px;">${row[1]}</td>
-            <td><span class="badge bg-success">${row[2]}</span></td>
-          </tr>`;
-        });
-        document.getElementById('statTable').innerHTML = html;
-      }).getStats();
-    }
+            if(!url) return alert("ใส่ลิงก์ก่อนครับ");
 
-    // โหลดสถิติเมื่อเปิดหน้าเว็บ
-    window.onload = loadStats;
-  </script>
+            btn.innerText = "กำลังสื่อสารกับ Google Sheets...";
+            
+            // เรียกใช้ Google Script
+            fetch(`${SCRIPT_URL}?longUrl=${encodeURIComponent(url)}&customId=${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('result').classList.remove('hidden');
+                    document.getElementById('shortLink').innerText = data.shortUrl;
+                    btn.innerText = "สร้างลิงก์และบันทึก";
+                    loadStats();
+                });
+        }
+
+        async function loadStats() {
+            const res = await fetch(`${SCRIPT_URL}?action=getStats`);
+            const data = await res.json();
+            let html = '';
+            data.forEach(row => {
+                html += `<tr class="border-b border-gray-700">
+                    <td class="p-4 font-mono text-blue-300">${row[0]}</td>
+                    <td class="p-4">${row[2]} ครั้ง</td>
+                </tr>`;
+            });
+            document.getElementById('statTable').innerHTML = html;
+        }
+
+        window.onload = loadStats;
+    </script>
 </body>
 </html>
