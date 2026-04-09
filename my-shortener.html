@@ -1,112 +1,87 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAYVO URL Shortener & Tracker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f4f7f6; padding-top: 50px; font-family: 'Sarabun', sans-serif; }
+    .card { border-radius: 15px; border: none; shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .btn-primary { background: #4285f4; border: none; }
+  </style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-4">
+<body>
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card p-4 shadow-sm">
+          <h2 class="text-center mb-4">🚀 ย่อลิงก์ด้วย Google Script</h2>
+          
+          <div class="mb-3">
+            <input type="url" id="longUrl" class="form-control" placeholder="วางลิงก์ยาวๆ ที่นี่...">
+          </div>
+          <div class="mb-3">
+            <input type="text" id="customId" class="form-control" placeholder="ชื่อที่ต้องการ (เว้นว่างไว้เพื่อสุ่ม)">
+          </div>
+          <button onclick="makeShort()" class="btn btn-primary w-100 py-2" id="btn">สร้างลิงก์ย่อ</button>
 
-    <div class="max-w-md w-full bg-slate-800 rounded-3xl shadow-2xl p-8 border border-slate-700">
-        <div class="text-center mb-8">
-            <i class="fa-solid fa-link text-5xl text-blue-500 mb-4"></i>
-            <h1 class="text-2xl font-bold">JAYVO Shortener</h1>
-            <p class="text-slate-400 text-sm">ย่อลิงก์ฟรี 10000% พร้อมนับจำนวนคลิก</p>
+          <div id="result" class="mt-4 text-center" style="display:none;">
+            <p>ลิงก์ของคุณคือ:</p>
+            <h4 id="shortenedLink" class="text-primary"></h4>
+          </div>
         </div>
 
-        <div class="space-y-4">
-            <div>
-                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">ลิงก์ต้นทาง</label>
-                <input type="url" id="longUrl" placeholder="https://example.com/..." 
-                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-            </div>
-
-            <button onclick="shortenLink()" id="btn"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20">
-                ย่อลิงก์เลย
-            </button>
+        <div class="mt-5">
+          <h4>📊 สถิติการใช้งาน</h4>
+          <table class="table table-hover bg-white rounded shadow-sm">
+            <thead>
+              <tr>
+                <th>รหัส</th>
+                <th>ปลายทาง</th>
+                <th>คลิก</th>
+              </tr>
+            </thead>
+            <tbody id="statTable"></tbody>
+          </table>
         </div>
-
-        <div id="result" class="mt-8 hidden animate-fade-in">
-            <div class="p-4 bg-slate-900 rounded-2xl border border-blue-500/30">
-                <p class="text-xs text-slate-500 mb-1">ลิงก์ย่อของคุณ:</p>
-                <div class="flex items-center justify-between">
-                    <span id="shortLink" class="text-blue-400 font-mono break-all"></span>
-                    <button onclick="copyLink()" class="ml-2 text-slate-400 hover:text-white transition-colors">
-                        <i class="fa-regular fa-copy"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="mt-4 grid grid-cols-2 gap-4">
-                <div class="bg-slate-900 p-4 rounded-2xl text-center border border-slate-700">
-                    <p class="text-[10px] text-slate-500 uppercase">สถานะ</p>
-                    <p class="text-green-400 font-bold">Active</p>
-                </div>
-                <div class="bg-slate-900 p-4 rounded-2xl text-center border border-slate-700">
-                    <p class="text-[10px] text-slate-500 uppercase">จำนวนคลิกสะสม</p>
-                    <p id="clickCount" class="text-white font-bold">0</p>
-                </div>
-            </div>
-            <p class="text-[10px] text-slate-500 mt-4 text-center">* ลิงก์ย่อจะถูกนับจำนวนครั้งที่เปิดผ่านระบบ API</p>
-        </div>
+      </div>
     </div>
+  </div>
 
-    <script>
-        // ใช้ CounterAPI (ฟรี) สำหรับนับจำนวนคลิก
-        // เปลี่ยน 'my-unique-key' เป็นชื่ออะไรก็ได้ที่สื่อถึงตัวคุณ
-        const apiKey = "github_shortener_" + Math.random().toString(36).substring(7);
+  <script>
+    function makeShort() {
+      const url = document.getElementById('longUrl').value;
+      const id = document.getElementById('customId').value;
+      const btn = document.getElementById('btn');
+      
+      if(!url) return alert('กรุณาใส่ URL');
+      
+      btn.disabled = true;
+      btn.innerHTML = 'กำลังสร้าง...';
 
-        async function shortenLink() {
-            const longUrl = document.getElementById('longUrl').value;
-            const btn = document.getElementById('btn');
-            
-            if (!longUrl) return alert("กรุณาใส่ลิงก์");
+      google.script.run.withSuccessHandler(function(res) {
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('shortenedLink').innerText = res;
+        btn.disabled = false;
+        btn.innerHTML = 'สร้างลิงก์ย่อ';
+        loadStats(); // อัปเดตตาราง
+      }).shortenUrl(url, id);
+    }
 
-            btn.disabled = true;
-            btn.innerText = "กำลังประมวลผล...";
+    function loadStats() {
+      google.script.run.withSuccessHandler(function(data) {
+        let html = '';
+        data.forEach(row => {
+          html += `<tr>
+            <td><strong>${row[0]}</strong></td>
+            <td class="text-truncate" style="max-width: 200px;">${row[1]}</td>
+            <td><span class="badge bg-success">${row[2]}</span></td>
+          </tr>`;
+        });
+        document.getElementById('statTable').innerHTML = html;
+      }).getStats();
+    }
 
-            try {
-                // 1. ใช้ TinyURL API ในการย่อ
-                const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
-                const shortUrl = await response.text();
-
-                // 2. สร้าง Counter สำหรับลิงก์นี้
-                await fetch(`https://api.countapi.xyz/create?namespace=myshortener&key=${apiKey}&value=0`);
-
-                document.getElementById('shortLink').innerText = shortUrl;
-                document.getElementById('result').classList.remove('hidden');
-                updateStats();
-            } catch (err) {
-                alert("เกิดข้อผิดพลาด ลองใหม่อีกครั้ง");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "ย่อลิงก์เลย";
-            }
-        }
-
-        function copyLink() {
-            const link = document.getElementById('shortLink').innerText;
-            navigator.clipboard.writeText(link);
-            alert("คัดลอกลิงก์แล้ว!");
-            
-            // จำลองการเพิ่มจำนวนคลิกเมื่อมีการกดใช้งาน (ในระบบ Static Site)
-            increaseClick();
-        }
-
-        async function increaseClick() {
-            const res = await fetch(`https://api.countapi.xyz/hit/myshortener/${apiKey}`);
-            const data = await res.json();
-            document.getElementById('clickCount').innerText = data.value;
-        }
-
-        async function updateStats() {
-            const res = await fetch(`https://api.countapi.xyz/get/myshortener/${apiKey}`);
-            const data = await res.json();
-            document.getElementById('clickCount').innerText = data.value;
-        }
-    </script>
+    // โหลดสถิติเมื่อเปิดหน้าเว็บ
+    window.onload = loadStats;
+  </script>
 </body>
 </html>
